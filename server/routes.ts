@@ -12,8 +12,13 @@ export async function registerRoutes(
 ): Promise<Server> {
 
   app.get(api.products.list.path, async (req, res) => {
-    const productsList = await storage.getProducts();
-    res.json(productsList);
+    try {
+      const productsList = await storage.getProducts();
+      res.json(productsList);
+    } catch (err) {
+      console.warn("Failed to fetch products:", err && err.message ? err.message : err);
+      res.status(503).json([]);
+    }
   });
 
   app.post(api.subscribers.create.path, async (req, res) => {
