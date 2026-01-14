@@ -36,7 +36,16 @@ export async function registerRoutes(
     }
   });
 
-  await seedDatabase();
+  // Attempt to seed the database, but don't crash the server if DB is unavailable.
+  if (process.env.SKIP_DB === "1") {
+    console.warn("SKIP_DB=1 — skipping database seeding and initial queries.");
+  } else {
+    try {
+      await seedDatabase();
+    } catch (err) {
+      console.warn("Database seed failed — continuing without DB. Error:", err && err.message ? err.message : err);
+    }
+  }
 
   return httpServer;
 }
