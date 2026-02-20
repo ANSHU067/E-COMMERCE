@@ -15,8 +15,9 @@ export async function registerRoutes(
     try {
       const productsList = await storage.getProducts();
       res.json(productsList);
-    } catch (err) {
-      console.warn("Failed to fetch products:", err && err.message ? err.message : err);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      console.warn("Failed to fetch products:", errorMessage);
       res.status(503).json([]);
     }
   });
@@ -30,14 +31,17 @@ export async function registerRoutes(
       }
       const subscriber = await storage.createSubscriber(input);
       res.status(201).json(subscriber);
-    } catch (err) {
+    } catch (err: unknown) {
       if (err instanceof z.ZodError) {
         return res.status(400).json({
           message: err.errors[0].message,
           field: err.errors[0].path.join('.'),
         });
       }
-      throw err;
+      if (err instanceof Error) {
+        return res.status(503).json({ message: err.message });
+      }
+      res.status(503).json({ message: "Unable to subscribe at this time" });
     }
   });
 
@@ -47,8 +51,9 @@ export async function registerRoutes(
   } else {
     try {
       await seedDatabase();
-    } catch (err) {
-      console.warn("Database seed failed — continuing without DB. Error:", err && err.message ? err.message : err);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      console.warn("Database seed failed — continuing without DB. Error:", errorMessage);
     }
   }
 
